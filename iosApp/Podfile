@@ -1,0 +1,7 @@
+pod 'KMPObservableViewModelSwiftUI', '1.0.0-BETA-8'
+
+target 'iosApp' do
+  use_frameworks!
+  platform :ios, '16.0'
+  pod 'shared', :path => '../shared'
+end

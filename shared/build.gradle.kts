@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.ksp)
     alias(libs.plugins.nativeCoroutines)
+    alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.ktorfit)
 }
 
 kotlin {
@@ -38,14 +40,33 @@ kotlin {
                 optIn("kotlinx.cinterop.ExperimentalForeignApi")
             }
         }
+        androidMain.dependencies {
+            //Ktor
+            implementation(libs.ktor.client.okhttp)
+        }
         commonMain.dependencies {
+            //Ktorfit
+            implementation(libs.ktorfit.lib)
+
+            //Ktor
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+
+            //Coroutine
             implementation(libs.kotlinx.coroutines.core)
+
+            //ViewModel
             api(libs.kmp.observableviewmodel.core)
 
             implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        iosMain.dependencies {
+            //Ktor
+            implementation(libs.ktor.client.darwin)
         }
     }
 }

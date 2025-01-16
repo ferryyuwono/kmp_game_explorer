@@ -3,6 +3,8 @@ package com.ferry.gameexplorer.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,12 +23,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ferry.gameexplorer.viewmodel.MainViewModel
+import com.ferry.gameexplorer.data.repository.GameRepositoryImpl
+import com.ferry.gameexplorer.domain.usecase.GetGameListUseCase
+import com.ferry.gameexplorer.feature.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,8 +50,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun GameScreen(viewModel: MainViewModel = MainViewModel()) {
-    val list = viewModel.gameList.collectAsState()
+fun GameScreen(viewModel: MainViewModel = MainViewModel(
+    getGameListUseCase = GetGameListUseCase(
+        repository = GameRepositoryImpl(),
+    )
+)) {
+    val output = viewModel.getGameListSuccessState.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -64,11 +73,11 @@ fun GameScreen(viewModel: MainViewModel = MainViewModel()) {
                         containerColor = Color.Blue,
                     ),
                     onClick = {
-                        viewModel.load()
+                        viewModel.start()
                     }
                 ) {
                     Text(
-                        text = "Load",
+                        text = "Start",
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -90,16 +99,60 @@ fun GameScreen(viewModel: MainViewModel = MainViewModel()) {
                 }
             }
         }
-        items(list.value) {
+        item {
+            GameOnboardingScreen(
+                modifier = Modifier.fillMaxWidth().fillParentMaxHeight(),
+                viewModel = viewModel
+            )
+        }
+        items(output.value.data) {
             Column(
                 modifier = Modifier.padding(8.dp),
             ) {
                 Text(
-                    text = it,
+                    text = it.name,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(modifier = Modifier.height(2.dp))
             }
+        }
+        item {
+            if (!output.value.isLastPage)
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
+                    ),
+                    onClick = {
+                        viewModel.loadMore()
+                    }
+                ) {
+                    Text(
+                        text = "Load More",
+                        textAlign = TextAlign.Center,
+                    )
+                }
+        }
+    }
+}
+
+@Composable
+fun GameOnboardingScreen(
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel,
+) {
+    val isShowOnBoarding = viewModel.isShowOnBoardingState.collectAsState()
+    if (isShowOnBoarding.value) {
+        Box(
+            modifier = modifier,
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "Press Start to Load List",
+            )
         }
     }
 }
@@ -110,7 +163,7 @@ fun GameScreen(viewModel: MainViewModel = MainViewModel()) {
     showSystemUi = true,
 )
 @Composable
-fun GameScreenPreview() {
+fun GameScreenOnboardingPreview() {
     MyApplicationTheme {
         GameScreen()
     }

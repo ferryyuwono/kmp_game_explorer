@@ -3,20 +3,24 @@ import shared
 import KMPObservableViewModelSwiftUI
 
 struct ContentView: View {
-    @StateViewModel var viewModel = shared.MainViewModel()
+    @StateViewModel var viewModel = shared.MainViewModel(
+        getGameListUseCase: GetGameListUseCase(
+            repository: GameRepositoryImpl()
+        )
+    )
         
 	var body: some View {
         VStack {
             HStack(
-                alignment: .center, 
+                alignment: .center,
                 spacing: 8
             ) {
                 Button(
                     action: {
-                        viewModel.load()
+                        viewModel.start()
                     }
                 ) {
-                    Text("Load")
+                    Text("Start")
                         .padding()
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -37,10 +41,38 @@ struct ContentView: View {
                 .background(.red)
                 .cornerRadius(10)
             }.padding(10)
-            List(viewModel.gameList, id: \.self) { it in
-                Text(it)
-            }.refreshable {
-                viewModel.load()
+            ZStack {
+                List {
+                    ForEach(
+                        viewModel.getGameListSuccessState.data,
+                        id: \.self
+                    ) { it in
+                        Text(it.name).padding()
+                    }
+                    
+                    if !viewModel.getGameListSuccessState.isLastPage {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .foregroundColor(.black)
+                            .foregroundColor(.red)
+                            .onAppear {
+                                viewModel.loadMore()
+                            }
+                    }
+                }.refreshable {
+                    viewModel.start()
+                }
+                
+                if viewModel.isShowOnBoardingState {
+                    HStack {
+                        Image(systemName: "star")
+                            .resizable()
+                            .frame(width: CGFloat(30), height: CGFloat(30), alignment: .center)
+                        Text("Press Start to Load List")
+                            .padding()
+                    }
+                }
+                    
             }
         }
 	}
